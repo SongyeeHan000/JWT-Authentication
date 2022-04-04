@@ -13,7 +13,7 @@
         super();
         this.state = {
           username: '',
-          password: ''
+          password: '',
         };
         this.onChange = this.onChange.bind(this);
         this.onSubmit = this.onSubmit.bind(this);
@@ -47,7 +47,8 @@
       constructor(){
         super();
         this.state = {
-          auth: {}
+          auth: {},
+          notes: [],
         };
         this.signIn = this.signIn.bind(this);
         this.logout = this.logout.bind(this);
@@ -64,11 +65,14 @@
               authorization: token
             }
           });
-          this.setState({ auth: response.data });
+          const anotherResponse = await axios.get(`/api/users/${id}/notes`)
+          const notes = response.data
+          this.setState({ auth: response.data , notes: notes});
         }
       }
       componentDidMount(){
         this.attemptTokenLogin();
+        this.loadNotes(this.props.match.params.id)
       }
       async signIn(credentials){
         let response = await axios.post('/api/auth', credentials);
@@ -76,6 +80,11 @@
         window.localStorage.setItem('token', token);
         this.attemptTokenLogin();
       }
+      // async loadNotes(id) {
+      //   let response = await axios.get(`/api/users/${id}/notes`)
+      //   const notes = response.data
+      //   this.setState({ notes: notes})
+      // }
       render(){
         const { auth } = this.state;
         const { signIn, logout } = this;
