@@ -1,6 +1,8 @@
 const Sequelize = require('sequelize');
+const bcrypt = require('bcrypt')
 const { STRING } = Sequelize;
 const jwt = require('jsonwebtoken');
+
 const SECRET_KEY = 'banana';
 
 const config = {
@@ -42,20 +44,23 @@ User.authenticate = async ({ username, password }) => {
     const user = await User.findOne({
         where: {
             username,
-            password
         }
     });
 
     if (user) {
-
+        const correct = await bcrypt.compare(password, user.password)
+        if (correct) {
+            const token = jwt.sign({
+                userId: user.id
+            }, SECRET_KEY);
+    
+            return token;
+        }   
+      
         // return jwt.sign({
         // userId: user.id
         // });
-        const token = jwt.sign({
-            userId: user.id
-        }, SECRET_KEY);
-
-        return token;
+ 
         // return jwt.token(newToken, SECRET_KEY);
     }
     const error = Error('bad credentials');
@@ -81,6 +86,12 @@ const syncAndSeed = async () => {
         }
     };
 };
+
+User.beforeCreate(async(user) => {
+        const hashed = await bcrypt.hash(user.password, 10)
+        user.password = hashed
+        return user.password
+})
 
 module.exports = {
     syncAndSeed,
